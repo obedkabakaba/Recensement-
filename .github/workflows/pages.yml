@@ -1,5 +1,6 @@
-# Publie la démonstration du tableau de bord sur GitHub Pages.
-# Données ENTIÈREMENT FICTIVES, générées à chaque publication : aucune donnée réelle n'est publiée.
+# Publie le tableau de bord de démonstration sur GitHub Pages à chaque mise à jour de main.
+# Les données de « donnees/ » sont ENTIÈREMENT FICTIVES (exportées par le serveur avec
+# `decensio exporter-demo`). Aucune donnée réelle ne doit jamais être publiée ici.
 # Prérequis (une seule fois) : Settings > Pages > Source : « GitHub Actions ».
 name: Démonstration GitHub Pages
 
@@ -18,34 +19,21 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  tests:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install ".[dev]"
-      - run: pytest -q
-
   construire:
-    needs: tests
     runs-on: ubuntu-latest
-    env:
-      DECENSIO_DATABASE_URL: sqlite:///demo.db
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: pip install .
-      - name: Données fictives et calcul
+      - name: Vérifier les fichiers de démonstration
         run: |
-          decensio donnees-test donnees-demo
-          decensio zones donnees-demo/zones.geojson
-          decensio population donnees-demo/population.tif --source "GRID3 (fictif)"
-          decensio importer donnees-demo/enregistrements.csv --source demonstration
-          decensio exporter-site _site
+          for f in resume.json niveaux.json couverture.json zones.geojson doublons.json menages-en-double.json anomalies.json agents.json; do
+            python3 -c "import json,sys; json.load(open('donnees/$f'))" || { echo "donnees/$f manquant ou invalide"; exit 1; }
+          done
+          grep -q 'statique: true' static/config.js || { echo "config.js doit rester en mode statique sur GitHub Pages"; exit 1; }
+      - name: Assembler le site
+        run: |
+          mkdir _site
+          cp -r index.html static donnees _site/
+          touch _site/.nojekyll
       - uses: actions/upload-pages-artifact@v3
         with:
           path: _site

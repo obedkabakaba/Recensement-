@@ -21,23 +21,25 @@
 ## Nom et identité (novembre 2026)
 - Nom retenu : **Decensio** (« décence » + census), devise « Chaque personne, une seule fois ».
 - Domaines libres au 12/11/2026 : decensio.com, .org, .africa (à réserver). Recensia, Ricensia, Demensia et Decensia ont été écartés : homonymes existants, connotation (« dementia ») ou .com déjà pris.
-- Logo : piste A, le « D » qui abrite une personne (`decensio/web/static/logo.svg`). Couleurs : bleu nuit #12355B, vert #1FA27A, jaune #F2B632.
+- Logo : piste A, le « D » qui abrite une personne (`static/logo.svg`). Couleurs : bleu nuit #12355B, vert #1FA27A, jaune #F2B632.
 
 ## Plan de construction
-1. **Moteur et tableau de bord Decensio** : FAIT (v0.1). Package Python `decensio/` avec import zones/GRID3/CSPro, doublons, saisies suspectes, couverture, API FastAPI, tableau de bord Leaflet, 26 tests. Reste à faire : brancher les vrais fichiers GRID3 et les limites des quartiers de Kinshasa, qu'Obed doit fournir.
+1. **Moteur et tableau de bord Decensio** : FAIT (v0.1). Moteur et API dans `Recensement-backend` (27 tests) ; tableau de bord Leaflet dans ce dépôt. Reste à faire : brancher les vrais fichiers GRID3 et les limites des quartiers de Kinshasa, qu'Obed doit fournir.
 2. **Maquette de l'app agent** : enregistrement d'un ménage, capture biométrique, alerte doublon (l'API `POST /api/sync` existe déjà), statut vert ou rouge. La biométrie est confirmée par Obed : elle fait partie du produit (visage, empreintes, iris), simulée dans la démo, réelle en production via un ABIS certifié. Decensio ne garde que la référence ABIS et le résultat de comparaison, pas les gabarits. Les lecteurs d'empreintes et d'iris imposent une app Android native (SDK des fabricants).
 3. **Prototype technique** : base de données sur Supabase, déploiement sur Render (`render.yaml` et `Dockerfile` prêts).
 4. **Dossier de présentation pour l'ONIP** : problème, solution, démo, plan du pilote, protection des données (voir `docs/protection-des-donnees.md`).
 
-## Organisation du dépôt et mise en ligne
-- Un seul dépôt (`obedkabakaba/Recensement-`, public) : le serveur Python (`decensio/`) et le tableau de bord (`decensio/web/static/`) vivent ensemble.
-- Démonstration publique sur GitHub Pages : site statique en lecture seule, données fictives, publié par `.github/workflows/pages.yml` à chaque mise à jour de `main` (`decensio exporter-site`). Ne jamais y publier de données réelles.
+## Organisation des dépôts et mise en ligne
+- **`obedkabakaba/Recensement-backend`** (privé) : moteur Python `decensio/`, API FastAPI, tests, docs, déploiement Render/Supabase. L'API n'affiche plus de pages : `/` renvoie vers `/docs`.
+- **`obedkabakaba/Recensement-`** (public, ce dépôt) : tableau de bord statique (HTML/CSS/JS + Leaflet), données de démonstration fictives dans `donnees/`, publié sur GitHub Pages (https://obedkabakaba.github.io/Recensement-/).
+- Le tableau de bord appelle l'API à l'adresse fixée dans `static/config.js` (ou `?api=` dans l'URL) ; sans API, il lit `donnees/` en lecture seule. Le serveur autorise ces appels via `DECENSIO_ORIGINES_AUTORISEES` (CORS).
+- Mise à jour de la démo : `decensio exporter-demo ../Recensement-/donnees`, uniquement avec des données fictives.
 
 ## Conventions techniques
-- Python 3.11+, SQLAlchemy 2 (SQLite en local, PostgreSQL en production), FastAPI, Shapely, rasterio, rapidfuzz.
+- Ce dépôt : HTML/CSS/JavaScript sans compilation ni framework ; Leaflet intégré dans `static/vendor/`.
+- Serveur (autre dépôt) : Python 3.11+, SQLAlchemy 2, FastAPI, Shapely, rasterio, rapidfuzz ; tests `pytest`.
 - Code, commentaires, messages et documentation en français.
-- Tests : `pytest` (données fictives générées par `decensio/synthetique.py`).
-- Les noms ne sont pas stockés en clair par défaut (`DECENSIO_STOCKER_NOMS=0`).
+- Les noms ne sont pas stockés en clair par défaut (`DECENSIO_STOCKER_NOMS=0`). Jamais de données réelles dans ce dépôt public.
 
 ## Prochaine étape
 Obtenir d'Obed : la grille GRID3 de population pour Kinshasa (GeoTIFF) et les limites des quartiers, aires de santé ou zones de santé (GeoJSON ou Shapefile). Les importer, vérifier la carte sur N'djili, puis déployer sur Render et Supabase.

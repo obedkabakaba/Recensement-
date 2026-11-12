@@ -392,6 +392,11 @@ if (CONFIG.statique) {
   document.body.classList.add("demo");
   $("#bandeau-demo").hidden = false;
   document.querySelector('.onglet[data-vue="import"]').hidden = true;
+} else if (CONFIG.api) {
+  // Toujours montrer à quel serveur la page parle : la clé d'API n'est envoyée qu'à lui.
+  const bandeau = $("#bandeau-demo");
+  bandeau.textContent = `Connecté au serveur Decensio : ${CONFIG.api}`;
+  bandeau.hidden = false;
 }
 initialiserCarte();
 toutRecharger().catch((err) => {
