@@ -1,0 +1,61 @@
+# Publie la démonstration du tableau de bord sur GitHub Pages.
+# Données ENTIÈREMENT FICTIVES, générées à chaque publication : aucune donnée réelle n'est publiée.
+# Prérequis (une seule fois) : Settings > Pages > Source : « GitHub Actions ».
+name: Démonstration GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ".[dev]"
+      - run: pytest -q
+
+  construire:
+    needs: tests
+    runs-on: ubuntu-latest
+    env:
+      DECENSIO_DATABASE_URL: sqlite:///demo.db
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install .
+      - name: Données fictives et calcul
+        run: |
+          decensio donnees-test donnees-demo
+          decensio zones donnees-demo/zones.geojson
+          decensio population donnees-demo/population.tif --source "GRID3 (fictif)"
+          decensio importer donnees-demo/enregistrements.csv --source demonstration
+          decensio exporter-site _site
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deployer:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4

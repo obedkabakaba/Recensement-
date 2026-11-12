@@ -53,7 +53,17 @@ Le cadre légal congolais est encore incomplet. Decensio applique donc par défa
 - **les noms ne sont pas conservés en clair** (`DECENSIO_STOCKER_NOMS=0`) : seules des clés phonétiques et des empreintes chiffrées (HMAC) sont gardées ;
 - **le NIN n'est jamais stocké** : seule son empreinte l'est ;
 - toute écriture exige une **clé d'API** et laisse une trace dans un **journal d'audit** (qui, quoi, quand) ;
-- la biométrie n'est **pas** traitée : elle reste chez les fournisseurs certifiés.
+- la **biométrie** (visage, empreintes, iris) passe par un système de correspondance certifié (ABIS) : Decensio lui envoie les captures et ne garde que la référence et le résultat de la comparaison. Elle est **simulée** dans la démonstration.
+
+## Démonstration en ligne (GitHub Pages)
+
+Une version **statique, en lecture seule et sur données fictives** du tableau de bord est publiée automatiquement par GitHub Actions (`.github/workflows/pages.yml`) à chaque mise à jour de la branche `main`. Pour la produire à la main :
+
+```bash
+decensio exporter-site _site      # n'exportez jamais de données réelles : le site est public
+```
+
+GitHub Pages ne sert que des fichiers. Les imports, la synchronisation des tablettes et les décisions demandent le serveur complet (ci-dessous).
 
 ## Déploiement
 

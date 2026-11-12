@@ -123,3 +123,6 @@ button[type=submit], #btn-recalcul { background: var(--nuit); color: #fff; borde
   .grille-import { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .paire .fiches { grid-template-columns: 1fr; }
 }
+
+.bandeau-demo { background: #fff4d6; color: #5c4300; border-bottom: 1px solid #f2dc9b; padding: 8px 24px; font-size: 13px; }
+.demo .actions, .demo #table-anomalies td:last-child, .demo #table-anomalies th:last-child { display: none; }

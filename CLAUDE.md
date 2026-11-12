@@ -25,9 +25,13 @@
 
 ## Plan de construction
 1. **Moteur et tableau de bord Decensio** : FAIT (v0.1). Package Python `decensio/` avec import zones/GRID3/CSPro, doublons, saisies suspectes, couverture, API FastAPI, tableau de bord Leaflet, 26 tests. Reste à faire : brancher les vrais fichiers GRID3 et les limites des quartiers de Kinshasa, qu'Obed doit fournir.
-2. **Maquette de l'app agent** : enregistrement d'un ménage, alerte doublon (l'API `POST /api/sync` existe déjà), statut vert ou rouge.
+2. **Maquette de l'app agent** : enregistrement d'un ménage, capture biométrique, alerte doublon (l'API `POST /api/sync` existe déjà), statut vert ou rouge. La biométrie est confirmée par Obed : elle fait partie du produit (visage, empreintes, iris), simulée dans la démo, réelle en production via un ABIS certifié. Decensio ne garde que la référence ABIS et le résultat de comparaison, pas les gabarits. Les lecteurs d'empreintes et d'iris imposent une app Android native (SDK des fabricants).
 3. **Prototype technique** : base de données sur Supabase, déploiement sur Render (`render.yaml` et `Dockerfile` prêts).
 4. **Dossier de présentation pour l'ONIP** : problème, solution, démo, plan du pilote, protection des données (voir `docs/protection-des-donnees.md`).
+
+## Organisation du dépôt et mise en ligne
+- Un seul dépôt (`obedkabakaba/Recensement-`, public) : le serveur Python (`decensio/`) et le tableau de bord (`decensio/web/static/`) vivent ensemble.
+- Démonstration publique sur GitHub Pages : site statique en lecture seule, données fictives, publié par `.github/workflows/pages.yml` à chaque mise à jour de `main` (`decensio exporter-site`). Ne jamais y publier de données réelles.
 
 ## Conventions techniques
 - Python 3.11+, SQLAlchemy 2 (SQLite en local, PostgreSQL en production), FastAPI, Shapely, rasterio, rapidfuzz.

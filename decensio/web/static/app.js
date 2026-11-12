@@ -23,7 +23,62 @@ function statutHTML(statut) {
   return `<span class="statut"><span class="puce ${esc(statut)}" aria-hidden="true">${s.sym}</span>${esc(s.lib)}</span>`;
 }
 
+const CONFIG = window.DECENSIO || { api: "", statique: false };
+
+/* Version de démonstration sans serveur : les réponses de l'API sont lues dans des
+ * fichiers JSON pré-calculés (dossier « donnees/ »), et les filtres sont appliqués ici. */
+const cacheStatique = {};
+async function lireStatique(nom) {
+  if (!cacheStatique[nom]) {
+    cacheStatique[nom] = fetch(`donnees/${nom}`).then((r) => {
+      if (!r.ok) throw new Error(`${r.status} : donnees/${nom} introuvable`);
+      return r.json();
+    });
+  }
+  return cacheStatique[nom];
+}
+
+async function apiStatique(url, options) {
+  if (options.method && options.method !== "GET") {
+    throw new Error("Version de démonstration : consultation seule, les modifications sont désactivées.");
+  }
+  const u = new URL(url, "http://x");
+  const q = u.searchParams;
+  const niveau = q.get("niveau") || "";
+  switch (u.pathname) {
+    case "/api/resume": return lireStatique("resume.json");
+    case "/api/niveaux": return lireStatique("niveaux.json");
+    case "/api/agents": return lireStatique("agents.json");
+    case "/api/doublons/menages": return lireStatique("menages-en-double.json");
+    case "/api/couverture":
+      return (await lireStatique("couverture.json")).filter((z) => !niveau || z.niveau === niveau);
+    case "/api/zones.geojson": {
+      const geo = await lireStatique("zones.geojson");
+      return { ...geo, features: geo.features.filter((f) => !niveau || f.properties.niveau === niveau) };
+    }
+    case "/api/doublons": {
+      const statut = q.get("statut") || "en_attente";
+      const paires = (await lireStatique("doublons.json")).paires.filter(
+        (p) => (statut === "tous" || p.statut === statut) && (!niveau || p.niveau === niveau)
+      );
+      return { total: paires.length, paires: paires.slice(0, Number(q.get("limite") || 100)) };
+    }
+    case "/api/anomalies": {
+      const statut = q.get("statut") || "ouverte";
+      const gravite = q.get("gravite") || "";
+      const liste = (await lireStatique("anomalies.json")).anomalies.filter(
+        (a) => (statut === "toutes" || a.statut === statut) && (!gravite || a.gravite === gravite)
+      );
+      return { total: liste.length, anomalies: liste };
+    }
+    default:
+      throw new Error(`Route non disponible dans la démonstration : ${u.pathname}`);
+  }
+}
+
 async function api(url, options = {}) {
+  if (CONFIG.statique) return apiStatique(url, options);
+  url = (CONFIG.api || "") + url;
   const entetes = { ...(options.headers || {}) };
   const cle = sessionStorage.getItem("decensio-cle");
   const qui = sessionStorage.getItem("decensio-utilisateur");
@@ -333,6 +388,11 @@ async function toutRecharger() {
   await chargerCarte();
 }
 
+if (CONFIG.statique) {
+  document.body.classList.add("demo");
+  $("#bandeau-demo").hidden = false;
+  document.querySelector('.onglet[data-vue="import"]').hidden = true;
+}
 initialiserCarte();
 toutRecharger().catch((err) => {
   $("#tuiles").innerHTML = `<div class="vide">Impossible de joindre l'API : ${esc(err.message)}</div>`;

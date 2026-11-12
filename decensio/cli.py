@@ -131,6 +131,14 @@ def cmd_donnees_test(a: argparse.Namespace) -> None:
     print(f"Fichiers écrits dans {a.dossier} : zones.geojson, population.tif, enregistrements.csv")
 
 
+def cmd_exporter_site(a: argparse.Namespace) -> None:
+    from .site_statique import exporter_site
+
+    initialiser_base()
+    _afficher(exporter_site(a.dossier))
+    print("Site statique prêt. Attention : n'exportez que des données fictives ou anonymisées.")
+
+
 def construire_parseur() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="decensio", description="Decensio : couverture et contrôle qualité du recensement et de l'identification.")
     p.add_argument("--version", action="version", version=f"decensio {__version__}")
@@ -182,6 +190,10 @@ def construire_parseur() -> argparse.ArgumentParser:
     t.add_argument("dossier")
     t.add_argument("--graine", type=int, default=7)
     t.set_defaults(fn=cmd_donnees_test)
+
+    x = sp.add_parser("exporter-site", help="exporte un tableau de bord statique en lecture seule (GitHub Pages)")
+    x.add_argument("dossier")
+    x.set_defaults(fn=cmd_exporter_site)
     return p
 
 

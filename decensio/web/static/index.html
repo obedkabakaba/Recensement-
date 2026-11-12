@@ -4,14 +4,14 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Decensio · Couverture et contrôle qualité</title>
-  <link rel="icon" href="/static/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="/static/vendor/leaflet/leaflet.css">
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="icon" href="static/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="static/vendor/leaflet/leaflet.css">
+  <link rel="stylesheet" href="static/style.css">
 </head>
 <body>
   <header class="entete">
     <div class="marque">
-      <img src="/static/logo-blanc.svg" alt="" width="34" height="34">
+      <img src="static/logo-blanc.svg" alt="" width="34" height="34">
       <span class="nom">Decens<span class="io">io</span></span>
       <span class="devise">Chaque personne, une seule fois.</span>
     </div>
@@ -25,6 +25,9 @@
     </nav>
   </header>
 
+  <div class="bandeau-demo" id="bandeau-demo" hidden>
+    Version de démonstration : données <b>entièrement fictives</b>, consultation seule. Les décisions et les imports sont désactivés.
+  </div>
   <section class="tuiles" id="tuiles" aria-label="Indicateurs clés"></section>
 
   <main>
@@ -142,7 +145,8 @@
   </main>
 
   <div id="infobulle" class="infobulle" role="tooltip" hidden></div>
-  <script src="/static/vendor/leaflet/leaflet.js"></script>
-  <script src="/static/app.js"></script>
+  <script src="static/config.js"></script>
+  <script src="static/vendor/leaflet/leaflet.js"></script>
+  <script src="static/app.js"></script>
 </body>
 </html>
