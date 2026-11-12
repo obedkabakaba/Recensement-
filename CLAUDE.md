@@ -1,4 +1,4 @@
-# Projet : outil de couverture et de contrôle qualité pour l'identification et le recensement (RDC)
+# Projet Decensio : outil de couverture et de contrôle qualité pour l'identification et le recensement (RDC)
 
 ## Contexte
 - Porteur : Obed, entrepreneur congolais (Kinshasa), étudiant à HEC Kinshasa. Réponses en **français**.
@@ -18,11 +18,22 @@
 - **Cible prioritaire** : l'ONIP (pilote à Kinshasa) plutôt que la CENI, qui est politiquement plus sensible. La protection des données sert d'argument de vente, car le cadre légal en RDC est jugé insuffisant.
 - **Vision long terme** : prouver le concept en RDC, obtenir la caution d'un partenaire (UNFPA, GRID3, INS), puis s'étendre à l'Afrique francophone. Modèle compatible avec CSPro, éventuellement open source ; revenus tirés de la mise en place, de la formation et du support.
 
+## Nom et identité (novembre 2026)
+- Nom retenu : **Decensio** (« décence » + census), devise « Chaque personne, une seule fois ».
+- Domaines libres au 12/11/2026 : decensio.com, .org, .africa (à réserver). Recensia, Ricensia, Demensia et Decensia ont été écartés : homonymes existants, connotation (« dementia ») ou .com déjà pris.
+- Logo : piste A, le « D » qui abrite une personne (`decensio/web/static/logo.svg`). Couleurs : bleu nuit #12355B, vert #1FA27A, jaune #F2B632.
+
 ## Plan de construction
-1. **Démo « carte de couverture »** sur Kinshasa ou une commune (ex. N'djili) avec les données GRID3. Obed doit télécharger les fichiers GRID3 et les fournir, car le réseau du bac à sable est limité.
-2. **Maquette de l'app agent** : enregistrement d'un ménage, alerte doublon, statut vert ou rouge.
-3. **Prototype technique** : base de données sur Supabase, déploiement sur Render.
-4. **Dossier de présentation pour l'ONIP** : problème, solution, démo, plan du pilote, protection des données.
+1. **Moteur et tableau de bord Decensio** : FAIT (v0.1). Package Python `decensio/` avec import zones/GRID3/CSPro, doublons, saisies suspectes, couverture, API FastAPI, tableau de bord Leaflet, 26 tests. Reste à faire : brancher les vrais fichiers GRID3 et les limites des quartiers de Kinshasa, qu'Obed doit fournir.
+2. **Maquette de l'app agent** : enregistrement d'un ménage, alerte doublon (l'API `POST /api/sync` existe déjà), statut vert ou rouge.
+3. **Prototype technique** : base de données sur Supabase, déploiement sur Render (`render.yaml` et `Dockerfile` prêts).
+4. **Dossier de présentation pour l'ONIP** : problème, solution, démo, plan du pilote, protection des données (voir `docs/protection-des-donnees.md`).
+
+## Conventions techniques
+- Python 3.11+, SQLAlchemy 2 (SQLite en local, PostgreSQL en production), FastAPI, Shapely, rasterio, rapidfuzz.
+- Code, commentaires, messages et documentation en français.
+- Tests : `pytest` (données fictives générées par `decensio/synthetique.py`).
+- Les noms ne sont pas stockés en clair par défaut (`DECENSIO_STOCKER_NOMS=0`).
 
 ## Prochaine étape
-Commencer par l'étape 1 : la démo de la carte de couverture.
+Obtenir d'Obed : la grille GRID3 de population pour Kinshasa (GeoTIFF) et les limites des quartiers, aires de santé ou zones de santé (GeoJSON ou Shapefile). Les importer, vérifier la carte sur N'djili, puis déployer sur Render et Supabase.

@@ -8,10 +8,10 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
 
+import shapely
 from shapely import STRtree
 from shapely.geometry import Point, mapping, shape
 from shapely.geometry.base import BaseGeometry
-from shapely.ops import transform
 
 RAYON_TERRE_M = 6_371_008.8
 
@@ -32,7 +32,7 @@ def superficie_km2(geom: BaseGeometry) -> float:
     lat0 = math.radians(geom.centroid.y)
     kx = RAYON_TERRE_M * math.cos(lat0) * math.pi / 180
     ky = RAYON_TERRE_M * math.pi / 180
-    projetee = transform(lambda x, y, z=None: (x * kx, y * ky), geom)
+    projetee = shapely.transform(geom, lambda coords: coords * [kx, ky])
     return projetee.area / 1e6
 
 

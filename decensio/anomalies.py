@@ -64,10 +64,13 @@ class Signal:
         return (self.type, self.menage_id, self.personne_id, self.agent_id if self.cible == "agent" else None)
 
 
+def _utc(dt: datetime) -> datetime:
+    """Les bases SQLite renvoient des dates sans fuseau : ce sont des heures UTC."""
+    return dt.replace(tzinfo=timezone.utc) if dt.tzinfo is None else dt.astimezone(timezone.utc)
+
+
 def _heure_locale(dt: datetime, decalage: int) -> datetime:
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt.astimezone(timezone(timedelta(hours=decalage)))
+    return _utc(dt).astimezone(timezone(timedelta(hours=decalage)))
 
 
 def _ancetres(code: str | None, parents: dict[str, str | None]) -> set[str]:
@@ -134,7 +137,7 @@ def controler_menages(menages: list[Menage], zones: dict[int, Zone], params: Par
 
         # --- Heure de collecte
         if m.collecte_le is not None:
-            collecte = m.collecte_le if m.collecte_le.tzinfo else m.collecte_le.replace(tzinfo=timezone.utc)
+            collecte = _utc(m.collecte_le)
             if collecte > maintenant + timedelta(days=1):
                 sig("date_future", "haute", collecte.date().isoformat())
             heure = _heure_locale(collecte, params.decalage_horaire).hour
@@ -161,9 +164,9 @@ def controler_agents(menages: list[Menage], params: Parametres) -> list[Signal]:
 
     for agent, liste in par_agent.items():
         # --- Rythme de travail
-        dates = sorted((m for m in liste if m.collecte_le), key=lambda m: m.collecte_le)  # type: ignore[arg-type, return-value]
+        dates = sorted((m for m in liste if m.collecte_le), key=lambda m: _utc(m.collecte_le))  # type: ignore[arg-type]
         for prec, suiv in zip(dates, dates[1:]):
-            ecart = (suiv.collecte_le - prec.collecte_le).total_seconds()  # type: ignore[operator]
+            ecart = (_utc(suiv.collecte_le) - _utc(prec.collecte_le)).total_seconds()  # type: ignore[arg-type]
             if 0 <= ecart < params.duree_min_entre_menages_s and len(suiv.personnes) >= 2:
                 signaux.append(Signal(
                     "rythme_trop_rapide", "moyenne", "menage",

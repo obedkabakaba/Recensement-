@@ -32,7 +32,7 @@ decensio = "decensio.cli:main"
 include = ["decensio*"]
 
 [tool.setuptools.package-data]
-decensio = ["web/static/*"]
+decensio = ["web/static/*", "web/static/vendor/leaflet/*", "web/static/vendor/leaflet/images/*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

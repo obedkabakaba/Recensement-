@@ -64,27 +64,27 @@ CELLULE = 0.000833  # environ 100 m
 def _zones() -> dict:
     entites = []
     commune = [[LON0, LAT0], [LON0 + COLS * PAS, LAT0], [LON0 + COLS * PAS, LAT0 + LIGNES * PAS], [LON0, LAT0 + LIGNES * PAS], [LON0, LAT0]]
-    entites.append({"type": "Feature", "properties": {"code": "CT", "nom": "Commune test", "niveau": "commune"},
+    entites.append({"type": "Feature", "properties": {"code": "CT", "nom": "Commune fictive", "niveau": "commune"},
                     "geometry": {"type": "Polygon", "coordinates": [commune]}})
     n = 1
     for j in range(LIGNES):
         for i in range(COLS):
             x0, y0 = LON0 + i * PAS, LAT0 + j * PAS
             anneau = [[x0, y0], [x0 + PAS, y0], [x0 + PAS, y0 + PAS], [x0, y0 + PAS], [x0, y0]]
-            entites.append({"type": "Feature", "properties": {"code": f"CT-Q{n:02d}", "nom": f"Quartier {n}", "code_parent": "CT"},
+            entites.append({"type": "Feature", "properties": {"code": f"CT-Q{n:02d}", "nom": f"Secteur fictif {n}", "code_parent": "CT"},
                             "geometry": {"type": "Polygon", "coordinates": [anneau]}})
             n += 1
     return {"type": "FeatureCollection", "features": entites}
 
 
-def _grille(chemin: Path, rng: np.random.Generator) -> np.ndarray:
+def _grille(chemin: Path, rng: np.random.Generator, echelle: float = 1.0) -> np.ndarray:
     largeur = int(round(COLS * PAS / CELLULE))
     hauteur = int(round(LIGNES * PAS / CELLULE))
     # Densité variable : un centre dense et des quartiers plus clairsemés.
     yy, xx = np.mgrid[0:hauteur, 0:largeur]
     centre = np.exp(-(((xx - largeur * 0.35) / (largeur * 0.35)) ** 2 + ((yy - hauteur * 0.5) / (hauteur * 0.6)) ** 2))
     pop = (8 + 60 * centre) * rng.uniform(0.6, 1.4, size=(hauteur, largeur))
-    pop = pop.astype("float32")
+    pop = (pop * echelle).astype("float32")
     transformation = from_origin(LON0, LAT0 + LIGNES * PAS, CELLULE, CELLULE)
     with rasterio.open(chemin, "w", driver="GTiff", height=hauteur, width=largeur, count=1, dtype="float32",
                        crs="EPSG:4326", transform=transformation, nodata=-99999) as dst:
@@ -115,15 +115,18 @@ def _menage(rng: random.Random) -> list[dict]:
     return membres
 
 
-def generer(dossier: str | Path, graine: int = 7, taux_couverture: dict[int, float] | None = None) -> dict:
-    """Écrit les trois fichiers de test dans `dossier` et renvoie un résumé de ce qui a été injecté."""
+def generer(dossier: str | Path, graine: int = 7, taux_couverture: dict[int, float] | None = None, echelle: float = 1.0) -> dict:
+    """Écrit les trois fichiers de test dans `dossier` et renvoie un résumé de ce qui a été injecté.
+
+    `echelle` réduit la population (0,1 = dix fois moins d'habitants) pour des essais rapides.
+    """
     dossier = Path(dossier)
     dossier.mkdir(parents=True, exist_ok=True)
     rng = random.Random(graine)
     nrng = np.random.default_rng(graine)
 
     (dossier / "zones.geojson").write_text(json.dumps(_zones()), encoding="utf-8")
-    pop = _grille(dossier / "population.tif", nrng)
+    pop = _grille(dossier / "population.tif", nrng, echelle)
 
     # Part des habitants déjà enregistrés, par quartier (1 à 12). Certains quartiers sont en retard.
     taux_couverture = taux_couverture or {1: 0.95, 2: 0.92, 3: 0.55, 4: 0.97, 5: 0.93, 6: 0.30, 7: 0.80, 8: 0.96, 9: 0.94, 10: 0.0, 11: 0.75, 12: 0.91}
@@ -162,7 +165,7 @@ def generer(dossier: str | Path, graine: int = 7, taux_couverture: dict[int, flo
     injecte = {"menages_en_double": 0, "empilement_gps": 0, "rythme_rapide": 0, "hors_zone": 0, "ages_invraisemblables": 0}
 
     # 1) Ménages visités deux fois par un autre agent, avec des variantes d'orthographe.
-    for zone, entete, membres in rng.sample(menages_crees, 25):
+    for zone, entete, membres in rng.sample(menages_crees, min(25, len(menages_crees) // 4)):
         compteur += 1
         copie = []
         for p in membres:
