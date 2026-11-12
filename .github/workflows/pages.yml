@@ -1,0 +1,49 @@
+# Publie le tableau de bord de démonstration sur GitHub Pages à chaque mise à jour de main.
+# Les données de « donnees/ » sont ENTIÈREMENT FICTIVES (exportées par le serveur avec
+# `decensio exporter-demo`). Aucune donnée réelle ne doit jamais être publiée ici.
+# Prérequis (une seule fois) : Settings > Pages > Source : « GitHub Actions ».
+name: Démonstration GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  construire:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Vérifier les fichiers de démonstration
+        run: |
+          for f in resume.json niveaux.json couverture.json zones.geojson doublons.json menages-en-double.json anomalies.json agents.json; do
+            python3 -c "import json,sys; json.load(open('donnees/$f'))" || { echo "donnees/$f manquant ou invalide"; exit 1; }
+          done
+          grep -q 'statique: true' static/config.js || { echo "config.js doit rester en mode statique sur GitHub Pages"; exit 1; }
+      - name: Assembler le site
+        run: |
+          mkdir _site
+          cp -r index.html static donnees _site/
+          touch _site/.nojekyll
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deployer:
+    needs: construire
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploiement.outputs.page_url }}
+    steps:
+      - id: deploiement
+        uses: actions/deploy-pages@v4
